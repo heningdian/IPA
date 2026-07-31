@@ -379,8 +379,44 @@
 
     </main>
 
-    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-6 text-center text-[11px] text-slate-400 dark:text-slate-600">
-        Pronunciation data derived from the CMU Pronouncing Dictionary (public domain, Carnegie Mellon University). Unknown words are estimated with rule-based letter-to-sound heuristics and marked with <span class="text-amber-500 font-bold">≈</span>.
+    <!-- FAQ -->
+    <section class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-circle-question text-sky-500"></i> Frequently Asked Questions
+            </h2>
+            <div class="space-y-5">
+                <div>
+                    <h3 class="font-semibold text-slate-800 dark:text-slate-100">Does this app need the internet or an AI subscription to work?</h3>
+                    <p class="text-slate-600 dark:text-slate-300 mt-1">No. Every transcription runs locally in your browser using a built-in pronunciation dictionary and letter-to-sound rules - there's no API key, account, or network call involved once the page has loaded.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-800 dark:text-slate-100">How accurate is the IPA transcription?</h3>
+                    <p class="text-slate-600 dark:text-slate-300 mt-1">Very high for real English words: pronunciations come from a ~124,000-word dictionary derived from the CMU Pronouncing Dictionary. For words it doesn't recognize (rare names, invented words), it falls back to rule-based spelling-to-sound estimates, which are flagged with a <span class="text-amber-500 font-bold">≈</span> so you always know when a result is a best guess rather than a verified pronunciation.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-800 dark:text-slate-100">What's the difference between Broad and Narrow notation?</h3>
+                    <p class="text-slate-600 dark:text-slate-300 mt-1">Broad (phonemic) notation, shown in slashes like /kæt/, captures the distinct sounds of a word. Narrow (phonetic) notation, shown in brackets like [kʰæt], adds finer detail such as aspiration and flapping for General American English.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-800 dark:text-slate-100">Which accents are supported?</h3>
+                    <p class="text-slate-600 dark:text-slate-300 mt-1">General American, British (RP), and Australian English. American is the dictionary's native accent; British and Australian are generated from it using standard phonological rules (like non-rhotic vowel mergers), so treat them as close approximations rather than a native RP/AuE dictionary.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-800 dark:text-slate-100">Is my text or voice recording sent anywhere?</h3>
+                    <p class="text-slate-600 dark:text-slate-300 mt-1">No. Text-to-IPA transcription and audio playback happen entirely on your device via your browser's built-in speech engine. Speech-to-IPA uses your browser's built-in speech recognition to get a transcript, which is then transcribed locally the same way as typed text.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-800 dark:text-slate-100">Why does a phoneme sound like a whole word instead of just the symbol?</h3>
+                    <p class="text-slate-600 dark:text-slate-300 mt-1">Speech synthesis engines can't reliably pronounce an isolated IPA character on its own. Instead, each symbol plays a real example word (like "cat" for /k/) so you hear the sound the way it actually occurs in speech.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-6 text-center text-[11px] text-slate-400 dark:text-slate-600 space-y-1">
+        <p>Pronunciation data derived from the CMU Pronouncing Dictionary (public domain, Carnegie Mellon University). Unknown words are estimated with rule-based letter-to-sound heuristics and marked with <span class="text-amber-500 font-bold">≈</span>.</p>
+        <p>PhoneticCraft © 2026 Hening Dian Paramita · <a href="https://www.travelinguist.net" class="hover:text-slate-600 dark:hover:text-slate-400 underline underline-offset-2" target="_blank" rel="noopener">travelinguist.net</a></p>
     </footer>
 
     <!-- Settings Modal -->
