@@ -374,8 +374,8 @@ function wrapNotation(s, notation) {
 }
 
 function buildPhonemeObj(symbol) {
-    const info = PHONEME_INFO[symbol] || { name: `Sound /${symbol}/`, type: 'consonant', features: '', example: '' };
-    return { symbol, name: info.name, type: info.type, features: info.features, example: info.example };
+    const info = PHONEME_INFO[symbol] || { name: `Sound /${symbol}/`, type: 'consonant', features: '', example: '', audio: '' };
+    return { symbol, name: info.name, type: info.type, features: info.features, example: info.example, audio: info.audio || info.example };
 }
 
 // ---------- Public: sentence-level transcription ----------

@@ -2,7 +2,6 @@
 // no network calls, no API keys, and it works fully offline once the page has loaded.
 
 let currentTab = 'transcriber';
-let selectedVoiceURI = localStorage.getItem('phoneticcraft_voice_uri') || '';
 let currentFullIPA = '';
 let mediaRecorder = null;
 let audioChunks = [];
@@ -10,8 +9,33 @@ let isRecording = false;
 let recordingInterval = null;
 let audioContext = null;
 let quizState = { score: 0, total: 0, currentIndex: 0, currentAnswer: null };
+let currentInspectedPhoneme = null;
 
 const DIALECT_BADGE = { 'en-US': 'GA', 'en-GB': 'RP', 'en-AU': 'AuE' };
+
+// The only three "actors" (TTS voices) the app offers, matching the three
+// accents the transcriber supports. Speech synthesis voices are looked up
+// fresh every time (rather than cached by a fragile voiceURI) so this keeps
+// working across browser restarts / voice-list reloads.
+const VOICE_REGIONS = [
+    { code: 'en-US', label: 'US English' },
+    { code: 'en-GB', label: 'UK English' },
+    { code: 'en-AU', label: 'Australian English' }
+];
+let selectedVoiceRegion = localStorage.getItem('phoneticcraft_voice_region') || 'en-US';
+
+function normalizeLang(lang) {
+    return (lang || '').replace('_', '-').toLowerCase();
+}
+
+function findVoiceForRegion(voices, code) {
+    const target = normalizeLang(code);
+    const region = target.split('-')[1];
+    return voices.find(v => normalizeLang(v.lang) === target)
+        || voices.find(v => normalizeLang(v.lang).startsWith('en') && normalizeLang(v.lang).endsWith(region))
+        || voices.find(v => normalizeLang(v.lang).startsWith('en') && v.name.toLowerCase().includes(region === 'gb' ? 'uk' : region === 'au' ? 'australia' : 'us'))
+        || null;
+}
 const SOURCE_LABEL = {
     dict: { text: '', title: 'Verified dictionary pronunciation' },
     derived: { text: '≈', title: 'Derived from a known root word + regular suffix rule' },
@@ -164,7 +188,12 @@ function inspectPhoneme(p) {
     document.getElementById('inspect-examples').innerText = p.example ? `Example: "${p.example}"` : '';
     card.classList.remove('hidden');
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    playPhonemeSound(p.symbol);
+    currentInspectedPhoneme = p;
+    playPhonemeSound(p);
+}
+
+function replayInspectedSound() {
+    if (currentInspectedPhoneme) playPhonemeSound(currentInspectedPhoneme);
 }
 
 function closeInspector() {
@@ -184,37 +213,42 @@ function copyIPA(event) {
 
 function getSelectedVoice() {
     const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-    if (selectedVoiceURI) {
-        const match = voices.find(v => v.voiceURI === selectedVoiceURI);
-        if (match) return match;
-    }
-    return null;
+    return findVoiceForRegion(voices, selectedVoiceRegion);
 }
 
-function speakText(text, lang) {
+// Speaks plain orthographic text (a real word/sentence) using the actor
+// (accent) chosen in Settings. Never feed this raw IPA symbols - speech
+// synthesis engines don't reliably read isolated IPA characters as the
+// intended sound (they'll spell them out, skip them, or mispronounce them).
+function speakText(text) {
     if (!('speechSynthesis' in window) || !text) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voice = getSelectedVoice();
     if (voice) utterance.voice = voice;
-    utterance.lang = lang || 'en-US';
+    utterance.lang = selectedVoiceRegion;
     utterance.rate = 0.9;
     window.speechSynthesis.speak(utterance);
 }
 
 function speakFullIPA() {
     const textToSpeak = document.getElementById('text-input').value.trim() || "phonetics";
-    const dialect = document.getElementById('dialect-select').value;
-    speakText(textToSpeak, dialect);
+    speakText(textToSpeak);
 }
 
-function playPhonemeSound(symbol) {
-    const dialect = document.getElementById('dialect-select') ? document.getElementById('dialect-select').value : 'en-US';
-    if (!('speechSynthesis' in window)) return;
+// Accepts either a phoneme object ({symbol, audio, example, ...}) or a plain
+// string. For phoneme objects we speak the demonstration word (p.audio /
+// p.example), not the bare IPA symbol, since TTS engines can't pronounce
+// isolated IPA characters correctly.
+function playPhonemeSound(phoneme) {
+    const textToSpeak = (typeof phoneme === 'object' && phoneme !== null)
+        ? (phoneme.audio || phoneme.example || phoneme.symbol)
+        : phoneme;
+    if (!('speechSynthesis' in window) || !textToSpeak) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(symbol);
-    utterance.rate = 0.75;
-    utterance.lang = dialect;
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.rate = 0.8;
+    utterance.lang = selectedVoiceRegion;
     const voice = getSelectedVoice();
     if (voice) utterance.voice = voice;
     window.speechSynthesis.speak(utterance);
@@ -247,10 +281,7 @@ function populateIPAChart() {
                     const btn = document.createElement('button');
                     btn.className = "ipa-text text-base font-bold w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300 hover:scale-110 transition-transform flex items-center justify-center";
                     btn.innerText = item.sym;
-                    btn.onclick = () => inspectPhoneme({
-                        symbol: item.sym, name: item.name, type: "consonant",
-                        features: `${row.manner} • ${pKey}`, example: item.ex
-                    });
+                    btn.onclick = () => inspectPhoneme(buildPhonemeObj(item.sym));
                     flex.appendChild(btn);
                 });
                 td.appendChild(flex);
@@ -268,7 +299,7 @@ function populateIPAChart() {
     VOWELS_DATA.concat(DIPHTHONGS_DATA).forEach(v => {
         const card = document.createElement('button');
         card.className = "p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 text-left hover:scale-[1.03] transition-all flex flex-col justify-between";
-        card.onclick = () => inspectPhoneme({ symbol: v.sym, name: v.name, type: "vowel", features: PHONEME_INFO[v.sym].features, example: v.ex });
+        card.onclick = () => inspectPhoneme(buildPhonemeObj(v.sym));
         card.innerHTML = `
             <div class="flex items-center justify-between">
                 <span class="ipa-text text-2xl font-bold text-violet-700 dark:text-violet-300">${v.sym}</span>
@@ -284,7 +315,7 @@ function populateIPAChart() {
     SUPRA_DATA.forEach(s => {
         const card = document.createElement('button');
         card.className = "p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-left hover:scale-[1.03] transition-all flex flex-col justify-between";
-        card.onclick = () => inspectPhoneme({ symbol: s.sym, name: s.name, type: s.type, features: "Feature / Diacritic", example: s.ex });
+        card.onclick = () => inspectPhoneme(buildPhonemeObj(s.sym));
         card.innerHTML = `
             <div class="flex items-center justify-between">
                 <span class="ipa-text text-2xl font-bold text-amber-700 dark:text-amber-300">${s.sym}</span>
@@ -499,33 +530,31 @@ function nextQuizQuestion() {
 }
 
 function playQuizPromptSound() {
-    speakText(quizState.currentAnswer, 'en-US');
+    speakText(quizState.currentAnswer);
 }
 
 // ---------- Settings ----------
 
+// Exactly 3 "actors" (US/UK/AU), each mapped to the best matching voice this
+// browser/OS actually provides. If the browser has no dedicated voice for a
+// region, the option is still offered (utterance.lang alone still steers a
+// lot of engines) but labeled so it's clear no dedicated voice was found.
 function populateVoiceOptions() {
     const select = document.getElementById('setting-voice');
     if (!('speechSynthesis' in window)) {
         select.innerHTML = '<option value="">Speech synthesis not supported in this browser</option>';
         return;
     }
-    const voices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-    const pool = voices.length ? voices : window.speechSynthesis.getVoices();
+    const voices = window.speechSynthesis.getVoices();
     select.innerHTML = '';
-    if (!pool.length) {
-        select.innerHTML = '<option value="">Loading voices...</option>';
-        return;
-    }
-    pool.forEach(v => {
+    VOICE_REGIONS.forEach(region => {
+        const match = findVoiceForRegion(voices, region.code);
         const opt = document.createElement('option');
-        opt.value = v.voiceURI;
-        opt.innerText = `${v.name} (${v.lang})`;
+        opt.value = region.code;
+        opt.innerText = match ? `${region.label} (${match.name})` : `${region.label} (browser default)`;
         select.appendChild(opt);
     });
-    if (selectedVoiceURI && pool.some(v => v.voiceURI === selectedVoiceURI)) {
-        select.value = selectedVoiceURI;
-    }
+    select.value = selectedVoiceRegion;
 }
 
 function openSettingsModal() {
@@ -538,8 +567,8 @@ function closeSettingsModal() {
 }
 
 function saveSettings() {
-    selectedVoiceURI = document.getElementById('setting-voice').value;
-    localStorage.setItem('phoneticcraft_voice_uri', selectedVoiceURI);
+    selectedVoiceRegion = document.getElementById('setting-voice').value || 'en-US';
+    localStorage.setItem('phoneticcraft_voice_region', selectedVoiceRegion);
     closeSettingsModal();
 }
 

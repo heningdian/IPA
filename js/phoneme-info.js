@@ -78,47 +78,53 @@ const DIPHTHONGS_DATA = [
     { sym: "oʊ", name: "Closing diphthong (mid back to close back)", ex: "go", type: "vowel" }
 ];
 
-// Suprasegmentals & Diacritics
+// Suprasegmentals & Diacritics.
+// `ex` is the illustrative display text (can contain IPA/slashes); `audio` is
+// a plain orthographic word safe to hand to speech synthesis.
 const SUPRA_DATA = [
-    { sym: "ˈ", name: "Primary Stress", ex: "ˈpho.ne.tics", type: "stress" },
-    { sym: "ˌ", name: "Secondary Stress", ex: "ˌed.u.ˈca.tion", type: "stress" },
-    { sym: ".", name: "Syllable Boundary", ex: "a.bout", type: "stress" },
-    { sym: "ː", name: "Length mark (long vowel)", ex: "RP car /kɑː/", type: "diacritic" }
+    { sym: "ˈ", name: "Primary Stress", ex: "ˈpho.ne.tics", audio: "phonetics", type: "stress" },
+    { sym: "ˌ", name: "Secondary Stress", ex: "ˌed.u.ˈca.tion", audio: "education", type: "stress" },
+    { sym: ".", name: "Syllable Boundary", ex: "a.bout", audio: "about", type: "stress" },
+    { sym: "ː", name: "Length mark (long vowel)", ex: "RP car /kɑː/", audio: "car", type: "diacritic" }
 ];
 
-// Flat lookup: symbol -> {name, type, features, example}. Built once at load.
+// Flat lookup: symbol -> {name, type, features, example, audio}. Built once at load.
+// `audio` is always a plain word/short phrase that a TTS engine can actually
+// pronounce - never a bare IPA symbol, which speech synthesis engines do not
+// reliably read as the intended sound (they'll spell it out, skip it, or
+// mispronounce it as an unrelated character).
 const PHONEME_INFO = {};
 (function buildPhonemeInfo() {
     CONSONANTS_DATA.forEach(row => {
         Object.keys(row.places).forEach(place => {
             row.places[place].forEach(item => {
-                PHONEME_INFO[item.sym] = { name: item.name, type: "consonant", features: `${row.manner} • ${place}`, example: item.ex };
+                PHONEME_INFO[item.sym] = { name: item.name, type: "consonant", features: `${row.manner} • ${place}`, example: item.ex, audio: item.ex };
             });
         });
     });
     VOWELS_DATA.forEach(v => {
-        PHONEME_INFO[v.sym] = { name: v.name, type: "vowel", features: "Monophthong", example: v.ex };
+        PHONEME_INFO[v.sym] = { name: v.name, type: "vowel", features: "Monophthong", example: v.ex, audio: v.ex };
     });
     DIPHTHONGS_DATA.forEach(v => {
-        PHONEME_INFO[v.sym] = { name: v.name, type: "vowel", features: "Diphthong", example: v.ex };
+        PHONEME_INFO[v.sym] = { name: v.name, type: "vowel", features: "Diphthong", example: v.ex, audio: v.ex };
     });
     SUPRA_DATA.forEach(s => {
-        PHONEME_INFO[s.sym] = { name: s.name, type: s.type, features: "Suprasegmental", example: s.ex };
+        PHONEME_INFO[s.sym] = { name: s.name, type: s.type, features: "Suprasegmental", example: s.ex, audio: s.audio };
     });
     // Dialect-only vowel variants produced by the GB/AU transforms, so the
     // inspector never shows a blank card if a user clicks a chip in those modes.
     const extra = {
-        "ɜː": { name: "Open-mid central unrounded (long)", type: "vowel", features: "Monophthong (non-rhotic)", example: "RP bird /bɜːd/" },
-        "ɪə": { name: "Centering diphthong", type: "vowel", features: "Diphthong (non-rhotic)", example: "RP near /nɪə/" },
-        "ɛə": { name: "Centering diphthong", type: "vowel", features: "Diphthong (non-rhotic)", example: "RP square /skwɛə/" },
-        "ʊə": { name: "Centering diphthong", type: "vowel", features: "Diphthong (non-rhotic)", example: "RP cure /kjʊə/" },
-        "ɑː": { name: "Open back unrounded (long)", type: "vowel", features: "Monophthong", example: "RP car /kɑː/" },
-        "ɔː": { name: "Open-mid back rounded (long)", type: "vowel", features: "Monophthong", example: "RP born /bɔːn/" },
-        "əʊ": { name: "Closing diphthong (RP GOAT vowel)", type: "vowel", features: "Diphthong", example: "RP go /ɡəʊ/" },
-        "æɪ": { name: "Closing diphthong (Australian FACE vowel)", type: "vowel", features: "Diphthong", example: "AuE say /sæɪ/" },
-        "əʉ": { name: "Closing diphthong (Australian GOAT vowel)", type: "vowel", features: "Diphthong", example: "AuE go /ɡəʉ/" },
-        "ʉ": { name: "Close central rounded (Australian GOOSE vowel)", type: "vowel", features: "Monophthong", example: "AuE too /tʉː/" },
-        "ɾ": { name: "Alveolar tap (American flap)", type: "consonant", features: "Tap • Alveolar", example: "GA butter /ˈbʌɾɚ/" }
+        "ɜː": { name: "Open-mid central unrounded (long)", type: "vowel", features: "Monophthong (non-rhotic)", example: "RP bird /bɜːd/", audio: "bird" },
+        "ɪə": { name: "Centering diphthong", type: "vowel", features: "Diphthong (non-rhotic)", example: "RP near /nɪə/", audio: "near" },
+        "ɛə": { name: "Centering diphthong", type: "vowel", features: "Diphthong (non-rhotic)", example: "RP square /skwɛə/", audio: "square" },
+        "ʊə": { name: "Centering diphthong", type: "vowel", features: "Diphthong (non-rhotic)", example: "RP cure /kjʊə/", audio: "cure" },
+        "ɑː": { name: "Open back unrounded (long)", type: "vowel", features: "Monophthong", example: "RP car /kɑː/", audio: "car" },
+        "ɔː": { name: "Open-mid back rounded (long)", type: "vowel", features: "Monophthong", example: "RP born /bɔːn/", audio: "born" },
+        "əʊ": { name: "Closing diphthong (RP GOAT vowel)", type: "vowel", features: "Diphthong", example: "RP go /ɡəʊ/", audio: "go" },
+        "æɪ": { name: "Closing diphthong (Australian FACE vowel)", type: "vowel", features: "Diphthong", example: "AuE say /sæɪ/", audio: "say" },
+        "əʉ": { name: "Closing diphthong (Australian GOAT vowel)", type: "vowel", features: "Diphthong", example: "AuE go /ɡəʉ/", audio: "go" },
+        "ʉ": { name: "Close central rounded (Australian GOOSE vowel)", type: "vowel", features: "Monophthong", example: "AuE too /tʉː/", audio: "too" },
+        "ɾ": { name: "Alveolar tap (American flap)", type: "consonant", features: "Tap • Alveolar", example: "GA butter /ˈbʌɾɚ/", audio: "butter" }
     };
     Object.assign(PHONEME_INFO, extra);
 })();

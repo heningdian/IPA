@@ -220,7 +220,7 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="playPhonemeSound(document.getElementById('inspect-symbol').innerText)" class="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium rounded-xl flex items-center gap-1.5 shadow-md shadow-sky-500/30 transition-all">
+                        <button onclick="replayInspectedSound()" class="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium rounded-xl flex items-center gap-1.5 shadow-md shadow-sky-500/30 transition-all">
                             <i class="fa-solid fa-volume-high"></i> Play Sound
                         </button>
                         <button onclick="closeInspector()" class="p-1.5 text-indigo-300 hover:text-white text-sm">
@@ -395,9 +395,9 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Speech Voice (Web Speech API)</label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Actor Voice (Accent)</label>
                     <select id="setting-voice" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-sky-500 text-slate-800 dark:text-slate-200"></select>
-                    <p class="text-[11px] text-slate-400 mt-1">Voices are provided by your browser/OS and used for "Listen" and phoneme audio playback. No account, key, or network access needed.</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Choose US, UK, or Australian English. This picks the browser/OS voice used for "Listen" and phoneme audio playback - no account, key, or network access needed. Real example words are spoken for each IPA symbol (bare IPA characters can't be pronounced correctly by speech synthesis).</p>
                 </div>
             </div>
 
