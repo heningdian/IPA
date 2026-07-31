@@ -47,6 +47,10 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(`sec-${tabId}`).classList.remove('hidden');
 
+    // Don't let a stale phoneme inspector card linger at the bottom of the
+    // Transcriber tab when navigating away and back.
+    if (tabId !== 'transcriber') closeInspector();
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
         btn.classList.add('text-slate-600', 'dark:text-slate-400');
@@ -109,6 +113,8 @@ function getOptions() {
 function transcribeText() {
     const text = document.getElementById('text-input').value.trim();
     if (!text) return;
+
+    closeInspector();
 
     const opts = getOptions();
     document.getElementById('badge-dialect').innerText = DIALECT_BADGE[opts.dialect] || opts.dialect;
