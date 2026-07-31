@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhoneticCraft - Offline IPA Transcriber & Phonetics Toolkit</title>
+    <meta name="description" content="Type English text and get an instant, accurate IPA phonetic transcription - runs entirely offline in your browser, no API key required.">
+
+    <!-- Compiled Tailwind CSS (built locally with the Tailwind CLI - no CDN/runtime JIT dependency) -->
+    <link rel="stylesheet" href="assets/tailwind.css">
+
+    <!-- Google Fonts: Inter & Charis SIL (for high quality IPA rendering). Falls back to
+         DejaVu Sans / system fonts (still fully IPA-capable) if offline. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Charis+SIL:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons (self-hosted, no CDN dependency) -->
+    <link rel="stylesheet" href="assets/fontawesome.min.css">
+
+    <style>
+        .ipa-text { font-family: 'Charis SIL', 'Gentium Plus', 'DejaVu Sans', serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 4px; }
+        .dark ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        .dark ::-webkit-scrollbar-thumb { background: rgba(75, 85, 99, 0.5); }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .recording-pulse { animation: pulse-ring 1.8s infinite ease-in-out; }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans transition-colors duration-200 flex flex-col overflow-x-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
+                        <span class="ipa-text text-xl font-bold">ə</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">PhoneticCraft</h1>
+                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">100% Offline</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Dictionary-backed IPA Transcriber & Phonetics Toolkit</p>
+                    </div>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium">
+                    <button onclick="switchTab('transcriber')" id="tab-btn-transcriber" class="tab-btn active px-4 py-1.5 rounded-lg transition-all flex items-center gap-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm">
+                        <i class="fa-solid fa-language text-sky-500"></i>
+                        <span>Text to IPA</span>
+                    </button>
+                    <button onclick="switchTab('chart')" id="tab-btn-chart" class="tab-btn px-4 py-1.5 rounded-lg transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fa-solid fa-table-cells text-indigo-500"></i>
+                        <span>IPA Chart</span>
+                    </button>
+                    <button onclick="switchTab('audio')" id="tab-btn-audio" class="tab-btn px-4 py-1.5 rounded-lg transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fa-solid fa-microphone text-emerald-500"></i>
+                        <span>Speech to IPA</span>
+                    </button>
+                    <button onclick="switchTab('quiz')" id="tab-btn-quiz" class="tab-btn px-4 py-1.5 rounded-lg transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fa-solid fa-graduation-cap text-amber-500"></i>
+                        <span>Practice</span>
+                    </button>
+                </nav>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors" title="Toggle Theme">
+                        <i id="theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+                    <button onclick="openSettingsModal()" class="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors" title="Settings">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="md:hidden border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 flex justify-around bg-slate-50 dark:bg-slate-900">
+            <button onclick="switchTab('transcriber')" id="mob-tab-transcriber" class="p-2 text-xs font-medium flex flex-col items-center gap-1 text-sky-600 dark:text-sky-400">
+                <i class="fa-solid fa-language text-base"></i> Transcribe
+            </button>
+            <button onclick="switchTab('chart')" id="mob-tab-chart" class="p-2 text-xs font-medium flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
+                <i class="fa-solid fa-table-cells text-base"></i> IPA Chart
+            </button>
+            <button onclick="switchTab('audio')" id="mob-tab-audio" class="p-2 text-xs font-medium flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
+                <i class="fa-solid fa-microphone text-base"></i> Audio
+            </button>
+            <button onclick="switchTab('quiz')" id="mob-tab-quiz" class="p-2 text-xs font-medium flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400">
+                <i class="fa-solid fa-graduation-cap text-base"></i> Practice
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: TEXT TO IPA TRANSCRIBER -->
+        <section id="sec-transcriber" class="tab-content block space-y-6">
+
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Accent</label>
+                        <select id="dialect-select" onchange="transcribeText()" class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-500 outline-none">
+                            <option value="en-US">English (General American)</option>
+                            <option value="en-GB">English (British RP, approximate)</option>
+                            <option value="en-AU">English (Australian, approximate)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Notation</label>
+                        <select id="notation-select" onchange="transcribeText()" class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-500 outline-none">
+                            <option value="broad">Broad Phonemic /.../</option>
+                            <option value="narrow">Narrow Phonetic [...]</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-4 sm:pt-0">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-stress" checked onchange="transcribeText()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-sky-600"></div>
+                            <span class="ml-2 text-xs font-medium text-slate-700 dark:text-slate-300">Stress Marks (ˈ ˌ)</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-syllables" checked onchange="transcribeText()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-sky-600"></div>
+                            <span class="ml-2 text-xs font-medium text-slate-700 dark:text-slate-300">Syllable Dots (.)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 font-medium hidden lg:inline">Quick Samples:</span>
+                    <button onclick="loadSample('The quick brown fox jumps over the lazy dog.')" class="px-2.5 py-1 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-slate-600 dark:text-slate-300 transition-colors">Pangram</button>
+                    <button onclick="loadSample('To be, or not to be, that is the question.')" class="px-2.5 py-1 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-slate-600 dark:text-slate-300 transition-colors">Shakespeare</button>
+                    <button onclick="loadSample('Supercalifragilisticexpialidocious')" class="px-2.5 py-1 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-slate-600 dark:text-slate-300 transition-colors">Complex Word</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-[380px]">
+                    <div class="p-3 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Orthographic Text Input</span>
+                        <span id="char-count" class="text-xs text-slate-400">0 chars</span>
+                    </div>
+                    <textarea id="text-input" placeholder="Type or paste English text here to transcribe into IPA phonetics..." class="flex-1 w-full p-4 bg-transparent outline-none resize-none text-slate-800 dark:text-slate-100 text-lg leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-600"></textarea>
+
+                    <div class="p-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 rounded-b-2xl">
+                        <button onclick="clearInput()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Clear
+                        </button>
+                        <button onclick="transcribeText()" id="btn-transcribe" class="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-medium text-sm rounded-xl shadow-md shadow-sky-500/20 flex items-center gap-2 transition-all active:scale-[0.98]">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Transcribe IPA</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-[380px]">
+                    <div class="p-3 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">IPA Phonetic Output</span>
+                            <span id="badge-dialect" class="text-[10px] bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded-md font-mono">GA</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button onclick="speakFullIPA()" id="btn-speak-ipa" class="p-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Listen to speech synthesis">
+                                <i class="fa-solid fa-volume-high text-sky-500"></i> Listen
+                            </button>
+                            <button onclick="copyIPA(event)" class="p-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Copy to Clipboard">
+                                <i class="fa-solid fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="ipa-output-container" class="flex-1 p-4 overflow-y-auto relative">
+                        <div id="ipa-placeholder" class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 text-center p-6">
+                            <i class="fa-solid fa-quote-left text-3xl mb-2 opacity-50"></i>
+                            <p class="text-sm">Click <strong class="text-sky-500">Transcribe IPA</strong> to view phonetic transcriptions with clickable interactive phoneme breakdown.</p>
+                        </div>
+
+                        <div id="ipa-result" class="hidden space-y-4">
+                            <div id="ipa-formatted-text" class="ipa-text text-2xl sm:text-3xl tracking-wide text-slate-900 dark:text-slate-50 leading-relaxed break-words bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            </div>
+
+                            <div>
+                                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Word Breakdown (Click phoneme for audio; <span class="text-amber-500 font-bold">≈</span> = estimated pronunciation)</h4>
+                                <div id="word-chips-container" class="flex flex-wrap gap-2"></div>
+                            </div>
+                        </div>
+
+                        <div id="ipa-loading" class="hidden absolute inset-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm flex flex-col items-center justify-center space-y-3 z-10">
+                            <div class="w-10 h-10 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
+                            <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Generating Phonetic Transcription...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="phoneme-inspector-card" class="hidden bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 rounded-2xl shadow-xl border border-indigo-500/30 transition-all">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
+                            <span id="inspect-symbol" class="ipa-text text-4xl font-bold text-sky-300"></span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 id="inspect-name" class="text-lg font-bold text-white"></h3>
+                                <span id="inspect-type" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-500/30 text-indigo-200 border border-indigo-400/30"></span>
+                            </div>
+                            <p id="inspect-features" class="text-sm text-indigo-200 mt-1"></p>
+                            <p id="inspect-examples" class="text-xs text-indigo-300/80 mt-1 italic"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="playPhonemeSound(document.getElementById('inspect-symbol').innerText)" class="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-white text-xs font-medium rounded-xl flex items-center gap-1.5 shadow-md shadow-sky-500/30 transition-all">
+                            <i class="fa-solid fa-volume-high"></i> Play Sound
+                        </button>
+                        <button onclick="closeInspector()" class="p-1.5 text-indigo-300 hover:text-white text-sm">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: INTERACTIVE IPA CHART -->
+        <section id="sec-chart" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="relative w-full md:w-72">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" id="chart-search" oninput="filterIPAChart()" placeholder="Search IPA character, feature, or example..." class="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <button onclick="resetChartFilter()" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Reset</button>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span class="inline-block w-3 h-3 rounded-full bg-violet-500/20 border border-violet-500"></span> Vowel
+                    <span class="inline-block w-3 h-3 rounded-full bg-sky-500/20 border border-sky-500 ml-2"></span> Consonant
+                    <span class="inline-block w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500 ml-2"></span> Suprasegmental
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/50">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="fa-solid fa-table-cells text-sky-500"></i> Pulmonic Consonants Chart
+                    </h3>
+                </div>
+                <div class="overflow-x-auto p-4">
+                    <table class="w-full text-xs text-center border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                                <th class="p-2 text-left font-semibold">Manner \ Place</th>
+                                <th class="p-2 font-semibold">Bilabial</th>
+                                <th class="p-2 font-semibold">Labiodental</th>
+                                <th class="p-2 font-semibold">Dental</th>
+                                <th class="p-2 font-semibold">Alveolar</th>
+                                <th class="p-2 font-semibold">Postalveolar</th>
+                                <th class="p-2 font-semibold">Retroflex</th>
+                                <th class="p-2 font-semibold">Palatal</th>
+                                <th class="p-2 font-semibold">Velar</th>
+                                <th class="p-2 font-semibold">Uvular</th>
+                                <th class="p-2 font-semibold">Glottal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="consonants-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-circle text-violet-500"></i> Vowels & Diphthongs
+                    </h3>
+                    <div id="vowels-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5"></div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-amber-500"></i> Stress & Suprasegmentals
+                    </h3>
+                    <div id="suprasegmental-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: SPEECH TO IPA (AUDIO INPUT) -->
+        <section id="sec-audio" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 max-w-3xl mx-auto text-center">
+                <div class="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 flex items-center justify-center text-2xl mx-auto mb-4 border border-emerald-200 dark:border-emerald-800">
+                    <i class="fa-solid fa-microphone-lines"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Speech-to-IPA Audio Transcriber</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-6">Record your voice and your browser's built-in speech recognition will recognize the words, which are then transcribed to IPA using the same offline engine as the Text tab. Requires Chrome/Edge (Web Speech API) and microphone access.</p>
+
+                <div class="flex flex-col items-center justify-center space-y-4">
+                    <div class="w-full h-24 bg-slate-900 rounded-xl overflow-hidden relative flex items-center justify-center border border-slate-700">
+                        <canvas id="audio-visualizer" class="w-full h-full"></canvas>
+                        <span id="visualizer-status" class="absolute text-xs text-slate-400 pointer-events-none">Click record to start voice audio capture</span>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleAudioRecording()" id="btn-record" class="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center text-xl shadow-lg shadow-emerald-500/30 transition-all transform active:scale-95">
+                            <i id="icon-record" class="fa-solid fa-microphone"></i>
+                        </button>
+                    </div>
+                    <span id="recording-timer" class="text-xs font-mono text-slate-500 dark:text-slate-400">00:00</span>
+
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700 w-full flex items-center justify-center gap-2">
+                        <label class="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-file-audio"></i>
+                            <span>Upload Audio File</span>
+                            <input type="file" id="audio-file-input" accept="audio/*" onchange="handleAudioFileUpload(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="speech-result-container" class="hidden bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 max-w-3xl mx-auto space-y-4">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Speech Audio IPA Analysis</h3>
+                <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p class="text-xs text-slate-400 mb-1">Spoken Text Recognized:</p>
+                    <p id="speech-recognized-text" class="text-base font-semibold text-slate-800 dark:text-slate-200 mb-3"></p>
+
+                    <p class="text-xs text-slate-400 mb-1">IPA Phonetic Transcription:</p>
+                    <div id="speech-ipa-text" class="ipa-text text-3xl font-bold text-sky-600 dark:text-sky-400 tracking-wide"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: PRACTICE & PHONETIC QUIZ -->
+        <section id="sec-quiz" class="tab-content hidden space-y-6">
+            <div class="max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-graduation-cap text-amber-500"></i> IPA Phonetic Quiz
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Test your IPA reading and listening skills</p>
+                    </div>
+                    <div class="bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
+                        <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Score</span>
+                        <div id="quiz-score" class="text-base font-bold text-amber-700 dark:text-amber-300">0 / 0</div>
+                    </div>
+                </div>
+
+                <div id="quiz-card" class="space-y-6">
+                    <div class="bg-slate-50 dark:bg-slate-900/80 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
+                        <span class="text-xs font-semibold text-sky-500 dark:text-sky-400 uppercase tracking-widest block mb-2">Identify the English word for this IPA:</span>
+                        <div id="quiz-ipa-prompt" class="ipa-text text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white my-4">/ˈfoʊ.ˈnɛ.tɪks/</div>
+
+                        <button onclick="playQuizPromptSound()" class="mt-2 px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium inline-flex items-center gap-1.5 transition-colors">
+                            <i class="fa-solid fa-volume-high text-sky-500"></i> Hear Sound
+                        </button>
+                    </div>
+
+                    <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+                    <div class="flex justify-end pt-2">
+                        <button onclick="nextQuizQuestion()" class="px-5 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-sm font-semibold rounded-xl hover:opacity-90 transition-all">
+                            Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-6 text-center text-[11px] text-slate-400 dark:text-slate-600">
+        Pronunciation data derived from the CMU Pronouncing Dictionary (public domain, Carnegie Mellon University). Unknown words are estimated with rule-based letter-to-sound heuristics and marked with <span class="text-amber-500 font-bold">≈</span>.
+    </footer>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl p-6 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-gear text-slate-500"></i> Settings
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Speech Voice (Web Speech API)</label>
+                    <select id="setting-voice" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-sky-500 text-slate-800 dark:text-slate-200"></select>
+                    <p class="text-[11px] text-slate-400 mt-1">Voices are provided by your browser/OS and used for "Listen" and phoneme audio playback. No account, key, or network access needed.</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                <button onclick="saveSettings()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs rounded-xl shadow-md transition-all">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pronunciation dictionary (~124k words, derived from CMUdict) -->
+    <script src="assets/dict.js"></script>
+    <script src="js/phoneme-info.js"></script>
+    <script src="js/g2p.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
