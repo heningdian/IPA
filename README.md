@@ -50,9 +50,16 @@ General American.
   a text transcript, then runs it through the same local G2P engine.
 - **Styling**: Tailwind CSS is compiled locally into `assets/tailwind.css`
   (no CDN runtime JIT compiler), and FontAwesome icons are self-hosted in
-  `assets/`. Only the optional Google Fonts webfont link is external; the
-  app falls back to system fonts (DejaVu Sans, etc., which still render IPA
-  correctly) if it's unreachable.
+  `assets/`.
+- **Fonts**: fully self-hosted, no Google Fonts (or any other) CDN call.
+  IPA text uses **Noto Sans**, chosen specifically because it has verified
+  Unicode coverage for every symbol this app produces (IPA Extensions,
+  Spacing Modifier Letters, and the Greek letters IPA borrows like θ/ɸ/β).
+  The original prototype specified "Charis SIL" from Google Fonts, but that
+  family was never actually hosted there, so it silently fell back to
+  whatever incomplete font the visitor's OS substituted - on systems without
+  a full-coverage fallback font this rendered IPA symbols as tofu boxes
+  (missing-glyph squares). UI text uses self-hosted **Inter**.
 
 ## Project layout
 
@@ -64,14 +71,17 @@ js/app.js               UI wiring (tabs, quiz, audio, settings)
 assets/dict.js          ~124k word pronunciation dictionary (generated)
 assets/tailwind.css     Compiled Tailwind build (generated, see below)
 assets/fontawesome.min.css / webfonts/   Self-hosted icon font
+assets/fonts.css / fonts/                Self-hosted Noto Sans + Inter webfonts (generated)
 tailwind.config.js, src/input.css        Tailwind CLI build inputs
+scripts/build-fonts.py                   Generates assets/fonts.css + assets/fonts/ from @fontsource packages
 ```
 
-## Rebuilding the CSS bundle
+## Rebuilding the CSS/font bundles
 
 ```
 npm install
 npm run build:css
+npm run build:fonts
 ```
 
 ## Running locally

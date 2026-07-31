@@ -9,17 +9,19 @@
     <!-- Compiled Tailwind CSS (built locally with the Tailwind CLI - no CDN/runtime JIT dependency) -->
     <link rel="stylesheet" href="assets/tailwind.css">
 
-    <!-- Google Fonts: Inter & Charis SIL (for high quality IPA rendering). Falls back to
-         DejaVu Sans / system fonts (still fully IPA-capable) if offline. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Charis+SIL:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Self-hosted webfonts: Noto Sans (verified full IPA/phonetic Unicode
+         coverage) for IPA text, Inter for UI text. No external font CDN -
+         "Charis SIL" (a common but non-Google-Fonts family) previously had no
+         real webfont behind it, silently falling back to whatever incomplete
+         font the visitor's OS happened to substitute, which is why IPA
+         symbols could render as tofu boxes (missing-glyph squares). -->
+    <link rel="stylesheet" href="assets/fonts.css">
 
     <!-- FontAwesome Icons (self-hosted, no CDN dependency) -->
     <link rel="stylesheet" href="assets/fontawesome.min.css">
 
     <style>
-        .ipa-text { font-family: 'Charis SIL', 'Gentium Plus', 'DejaVu Sans', serif; }
+        .ipa-text { font-family: 'Noto Sans', 'Charis SIL', 'Gentium Plus', 'DejaVu Sans', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
         ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 4px; }

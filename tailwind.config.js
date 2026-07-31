@@ -6,8 +6,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        ipa: ['Charis SIL', 'Gentium Plus', 'DejaVu Sans', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        ipa: ['Noto Sans', 'Charis SIL', 'Gentium Plus', 'DejaVu Sans', 'sans-serif'],
       },
       colors: {
         brand: {

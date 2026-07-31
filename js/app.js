@@ -47,9 +47,10 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(`sec-${tabId}`).classList.remove('hidden');
 
-    // Don't let a stale phoneme inspector card linger at the bottom of the
-    // Transcriber tab when navigating away and back.
-    if (tabId !== 'transcriber') closeInspector();
+    // The phoneme inspector card belongs to whichever tab was open when it was
+    // opened (Transcriber word chips or the IPA Chart) - always close it on
+    // any tab switch so it never lingers into a tab it wasn't opened from.
+    closeInspector();
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
