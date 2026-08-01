@@ -579,6 +579,15 @@ function saveSettings() {
     closeSettingsModal();
 }
 
+// ---------- FAQ (collapsible) ----------
+
+function toggleFaq(btn) {
+    const answer = btn.nextElementSibling;
+    const icon = btn.querySelector('i');
+    answer.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
+
 // ---------- Init ----------
 
 window.onload = function () {
