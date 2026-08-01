@@ -74,6 +74,8 @@ assets/fontawesome.min.css / webfonts/   Self-hosted icon font
 assets/fonts.css / fonts/                Self-hosted Noto Sans + Inter webfonts (generated)
 tailwind.config.js, src/input.css        Tailwind CLI build inputs
 scripts/build-fonts.py                   Generates assets/fonts.css + assets/fonts/ from @fontsource packages
+vercel.json                              Tells Vercel this is a plain static site (no framework/build step)
+.github/workflows/deploy-pages.yml       GitHub Pages deploy workflow
 ```
 
 ## Rebuilding the CSS/font bundles
@@ -94,3 +96,42 @@ npm run serve
 
 (No build step is required to run the app - `assets/tailwind.css` and
 `assets/dict.js` are already committed as generated output.)
+
+## Deployment
+
+This is a plain static site - every generated file (`assets/tailwind.css`,
+`assets/dict.js`, the self-hosted fonts) is committed to the repo, so a host
+just needs to serve the files as-is. No server runtime, no build step, no
+environment variables.
+
+### GitHub Pages (current)
+
+Handled by `.github/workflows/deploy-pages.yml`: every push to `main`
+deploys the repo root to Pages automatically. Live at
+https://heningdian.github.io/IPA/.
+
+### Vercel
+
+`vercel.json` is already set up for a zero-build static deploy (it tells
+Vercel not to auto-detect a framework or run `npm install`/build, since
+nothing needs building at deploy time - `package.json`'s scripts are only
+for regenerating the CSS/font bundles during development).
+
+**Dashboard (no CLI needed):**
+1. [vercel.com/new](https://vercel.com/new) → Import Git Repository → pick
+   `heningdian/IPA`.
+2. Leave every build setting as detected (Framework Preset: *Other*, Build
+   Command/Install Command: empty, Output Directory: `.`) - `vercel.json`
+   sets these automatically.
+3. Deploy. You'll get a `*.vercel.app` URL; a custom domain can be attached
+   afterwards under Project Settings → Domains.
+
+**CLI:**
+```
+npm i -g vercel
+vercel        # first run links the project and deploys a preview
+vercel --prod # promotes to the production domain
+```
+
+Both GitHub Pages and Vercel can run side by side off the same `main`
+branch - deploying to Vercel doesn't require removing the Pages workflow.
