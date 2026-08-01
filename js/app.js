@@ -479,35 +479,77 @@ function displaySpeechIPA(recognizedText) {
 }
 
 // ---------- Practice Quiz (Tab 4) ----------
+// Content comes from js/quiz-data.js: 10 batches x 10 questions, each batch a
+// different exercise type (IPA<->word, phoneme identification, stress,
+// syllables, narrow notation, dialects, vowel matching...), generated and
+// verified against the real transcription engine - see scripts/build-quiz.js.
 
-const QUIZ_QUESTIONS = [
-    { ipa: "/ˈfoʊ.ˈnɛ.tɪks/", options: ["Phonetics", "Phonics", "Phonebook", "Fantastic"], answer: "Phonetics" },
-    { ipa: "/ˈlæŋ.ɡwɪdʒ/", options: ["Language", "Languish", "Laughter", "Luggage"], answer: "Language" },
-    { ipa: "/ˈæl.fə.bɛt/", options: ["Alphabet", "Alfalfa", "Altitude", "Albatross"], answer: "Alphabet" },
-    { ipa: "/ˈkæ.tɚ.pɪ.lɚ/", options: ["Caterpillar", "Category", "Captain", "Capital"], answer: "Caterpillar" },
-    { ipa: "/ˈdʒɝ.ni/", options: ["Journey", "Journal", "Jury", "Jewelry"], answer: "Journey" },
-    { ipa: "/ˈnɔ.lɪdʒ/", options: ["Knowledge", "Novelty", "Nourish", "Naughty"], answer: "Knowledge" },
-    { ipa: "/saɪ.ˈkɑ.lə.dʒi/", options: ["Psychology", "Physiology", "Sociology", "Cardiology"], answer: "Psychology" }
-];
+function populateQuizBatchSelector() {
+    const container = document.getElementById('quiz-batch-selector');
+    container.innerHTML = '';
+    QUIZ_BATCHES.forEach((batch, idx) => {
+        const btn = document.createElement('button');
+        btn.dataset.batchIdx = idx;
+        btn.className = "px-2 py-2 rounded-xl text-xs font-medium border transition-colors text-center";
+        btn.innerText = `${idx + 1}. ${batch.title}`;
+        btn.onclick = () => selectQuizBatch(idx);
+        container.appendChild(btn);
+    });
+}
+
+function updateQuizBatchSelectorStyles() {
+    document.querySelectorAll('#quiz-batch-selector button').forEach(btn => {
+        const isActive = Number(btn.dataset.batchIdx) === quizState.batchIndex;
+        btn.className = "px-2 py-2 rounded-xl text-xs font-medium border transition-colors text-center " + (
+            isActive
+                ? "bg-sky-600 border-sky-600 text-white"
+                : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-sky-300 dark:hover:border-sky-700"
+        );
+    });
+}
 
 function initQuiz() {
-    quizState = { score: 0, total: 0, currentIndex: 0, currentAnswer: null };
+    populateQuizBatchSelector();
+    selectQuizBatch(0);
+}
+
+function selectQuizBatch(idx) {
+    quizState = { batchIndex: idx, score: 0, total: 0, currentIndex: 0, currentAnswer: null, currentAudioText: null };
     document.getElementById('quiz-score').innerText = "0 / 0";
+    document.getElementById('quiz-batch-title').innerHTML = `<i class="fa-solid fa-graduation-cap text-amber-500"></i> ${QUIZ_BATCHES[idx].title}`;
+    updateQuizBatchSelectorStyles();
     renderQuizQuestion();
 }
 
 function renderQuizQuestion() {
-    const q = QUIZ_QUESTIONS[quizState.currentIndex % QUIZ_QUESTIONS.length];
-    document.getElementById('quiz-ipa-prompt').innerText = q.ipa;
+    const batch = QUIZ_BATCHES[quizState.batchIndex];
+    const q = batch.questions[quizState.currentIndex % batch.questions.length];
     quizState.currentAnswer = q.answer;
+    quizState.currentAudioText = q.audioText;
+
+    document.getElementById('quiz-progress').innerText = `Question ${(quizState.currentIndex % batch.questions.length) + 1} of ${batch.questions.length}`;
+    document.getElementById('quiz-instruction').innerText = q.instruction;
+
+    const promptEl = document.getElementById('quiz-prompt');
+    promptEl.innerText = q.prompt;
+    promptEl.className = q.promptIsIPA
+        ? "ipa-text text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white my-4"
+        : "text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white my-4";
+
+    const subEl = document.getElementById('quiz-subprompt');
+    if (q.subPrompt) {
+        subEl.innerText = q.subPrompt;
+        subEl.classList.remove('hidden');
+    } else {
+        subEl.classList.add('hidden');
+    }
 
     const container = document.getElementById('quiz-options-container');
     container.innerHTML = '';
-
-    const shuffled = [...q.options];
     q.options.forEach(opt => {
         const btn = document.createElement('button');
-        btn.className = "p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:bg-sky-50 dark:hover:bg-sky-950/50 hover:border-sky-300 dark:hover:border-sky-700 text-slate-800 dark:text-slate-100 font-semibold text-center transition-all";
+        const textClass = q.optionsAreIPA ? "ipa-text text-lg" : "";
+        btn.className = `p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:bg-sky-50 dark:hover:bg-sky-950/50 hover:border-sky-300 dark:hover:border-sky-700 text-slate-800 dark:text-slate-100 font-semibold text-center transition-all ${textClass}`;
         btn.innerText = opt;
         btn.onclick = () => handleQuizAnswer(opt, btn);
         container.appendChild(btn);
@@ -537,7 +579,7 @@ function nextQuizQuestion() {
 }
 
 function playQuizPromptSound() {
-    speakText(quizState.currentAnswer);
+    speakText(quizState.currentAudioText || quizState.currentAnswer);
 }
 
 // ---------- Settings ----------

@@ -352,36 +352,44 @@
 
         <!-- TAB 4: PRACTICE & PHONETIC QUIZ -->
         <section id="sec-quiz" class="tab-content hidden space-y-6">
-            <div class="max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 mb-6">
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <i class="fa-solid fa-graduation-cap text-amber-500"></i> IPA Phonetic Quiz
-                        </h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Test your IPA reading and listening skills</p>
-                    </div>
-                    <div class="bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
-                        <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Score</span>
-                        <div id="quiz-score" class="text-base font-bold text-amber-700 dark:text-amber-300">0 / 0</div>
-                    </div>
+            <div class="max-w-2xl mx-auto space-y-4">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Choose an exercise batch (10 questions each)</h3>
+                    <div id="quiz-batch-selector" class="grid grid-cols-2 sm:grid-cols-5 gap-2"></div>
                 </div>
 
-                <div id="quiz-card" class="space-y-6">
-                    <div class="bg-slate-50 dark:bg-slate-900/80 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
-                        <span class="text-xs font-semibold text-sky-500 dark:text-sky-400 uppercase tracking-widest block mb-2">Identify the English word for this IPA:</span>
-                        <div id="quiz-ipa-prompt" class="ipa-text text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white my-4">/ˈfoʊ.ˈnɛ.tɪks/</div>
-
-                        <button onclick="playQuizPromptSound()" class="mt-2 px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium inline-flex items-center gap-1.5 transition-colors">
-                            <i class="fa-solid fa-volume-high text-sky-500"></i> Hear Sound
-                        </button>
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 mb-6">
+                        <div>
+                            <h2 id="quiz-batch-title" class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-graduation-cap text-amber-500"></i> IPA Phonetic Quiz
+                            </h2>
+                            <p id="quiz-progress" class="text-xs text-slate-500 dark:text-slate-400">Question 1 of 10</p>
+                        </div>
+                        <div class="bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
+                            <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Score</span>
+                            <div id="quiz-score" class="text-base font-bold text-amber-700 dark:text-amber-300">0 / 0</div>
+                        </div>
                     </div>
 
-                    <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                    <div id="quiz-card" class="space-y-6">
+                        <div class="bg-slate-50 dark:bg-slate-900/80 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
+                            <span id="quiz-instruction" class="text-xs font-semibold text-sky-500 dark:text-sky-400 uppercase tracking-widest block mb-2"></span>
+                            <div id="quiz-prompt" class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white my-4"></div>
+                            <div id="quiz-subprompt" class="ipa-text hidden text-xl text-slate-500 dark:text-slate-400 -mt-2 mb-2"></div>
 
-                    <div class="flex justify-end pt-2">
-                        <button onclick="nextQuizQuestion()" class="px-5 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-sm font-semibold rounded-xl hover:opacity-90 transition-all">
-                            Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
-                        </button>
+                            <button onclick="playQuizPromptSound()" class="mt-2 px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium inline-flex items-center gap-1.5 transition-colors">
+                                <i class="fa-solid fa-volume-high text-sky-500"></i> Hear Sound
+                            </button>
+                        </div>
+
+                        <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+                        <div class="flex justify-end pt-2">
+                            <button onclick="nextQuizQuestion()" class="px-5 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-sm font-semibold rounded-xl hover:opacity-90 transition-all">
+                                Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -397,6 +405,34 @@
                 <i class="fa-solid fa-circle-question text-sky-500"></i> Frequently Asked Questions
             </h2>
             <div class="divide-y divide-slate-100 dark:divide-slate-700">
+                <div class="faq-item">
+                    <button onclick="toggleFaq(this)" class="faq-question w-full flex items-center justify-between gap-3 py-4 text-left">
+                        <span class="font-semibold text-slate-800 dark:text-slate-100">What is English IPA in general?</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform shrink-0"></i>
+                    </button>
+                    <p class="faq-answer hidden text-slate-600 dark:text-slate-300 pb-4">The International Phonetic Alphabet (IPA) is a standardized system of symbols that represents the actual sounds of speech, rather than how a language is spelled. English spelling is notoriously inconsistent (think "though," "through," and "tough"), so IPA gives every sound its own unique symbol - this app is a tool for converting written English into that symbol system.</p>
+                </div>
+                <div class="faq-item">
+                    <button onclick="toggleFaq(this)" class="faq-question w-full flex items-center justify-between gap-3 py-4 text-left">
+                        <span class="font-semibold text-slate-800 dark:text-slate-100">Who is this app for?</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform shrink-0"></i>
+                    </button>
+                    <p class="faq-answer hidden text-slate-600 dark:text-slate-300 pb-4">English learners and teachers working on pronunciation, linguistics and TESOL/TEFL students, actors and voice-over artists preparing an accent, singers and public speakers, dictionary/subtitle/course writers who need accurate transcriptions, and anyone curious about how a word is actually pronounced.</p>
+                </div>
+                <div class="faq-item">
+                    <button onclick="toggleFaq(this)" class="faq-question w-full flex items-center justify-between gap-3 py-4 text-left">
+                        <span class="font-semibold text-slate-800 dark:text-slate-100">How can I use this?</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform shrink-0"></i>
+                    </button>
+                    <p class="faq-answer hidden text-slate-600 dark:text-slate-300 pb-4">Type or paste English text into the Text to IPA tab and click Transcribe - click any phoneme in the result to hear it and see its features. Use the IPA Chart tab to browse every symbol by sound, Speech to IPA to transcribe your own voice, and Practice to test yourself with the quiz. Accent, notation, stress, and syllable options are all in the controls above the input box.</p>
+                </div>
+                <div class="faq-item">
+                    <button onclick="toggleFaq(this)" class="faq-question w-full flex items-center justify-between gap-3 py-4 text-left">
+                        <span class="font-semibold text-slate-800 dark:text-slate-100">What are common uses of this English IPA app?</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform shrink-0"></i>
+                    </button>
+                    <p class="faq-answer hidden text-slate-600 dark:text-slate-300 pb-4">Checking how to pronounce a new or difficult word, preparing pronunciation notes for language lessons, comparing American/British/Australian accents, practicing minimal pairs and stress patterns in the Practice tab, transcribing scripts or lyrics for performance, and building phonetic awareness with the interactive IPA chart.</p>
+                </div>
                 <div class="faq-item">
                     <button onclick="toggleFaq(this)" class="faq-question w-full flex items-center justify-between gap-3 py-4 text-left">
                         <span class="font-semibold text-slate-800 dark:text-slate-100">Does this app need the internet or an AI subscription to work?</span>
@@ -451,7 +487,7 @@
     </section>
 
     <footer class="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-6 text-center text-slate-600 dark:text-slate-300 space-y-1">
-        <p>English IPA © 2026 Hening Dian Paramita · <a href="https://www.travelinguist.net" class="underline underline-offset-2 hover:text-slate-800 dark:hover:text-white" target="_blank" rel="noopener">travelinguist.net</a></p>
+        <p>English IPA © 2025 Hening Dian Paramita · <a href="https://www.travelinguist.net" class="underline underline-offset-2 hover:text-slate-800 dark:hover:text-white" target="_blank" rel="noopener">travelinguist.net</a></p>
     </footer>
 
     <!-- Settings Modal -->
@@ -484,6 +520,7 @@
     <script src="assets/dict.js"></script>
     <script src="js/phoneme-info.js"></script>
     <script src="js/g2p.js"></script>
+    <script src="js/quiz-data.js"></script>
     <script src="js/app.js"></script>
 
     <!-- Floating feedback button, stacked directly above the Ko-fi floating

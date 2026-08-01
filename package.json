@@ -6,6 +6,7 @@
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./assets/tailwind.css --minify",
     "build:fonts": "python3 scripts/build-fonts.py",
+    "build:quiz": "node scripts/build-quiz.js",
     "serve": "python3 -m http.server 8080"
   },
   "repository": {

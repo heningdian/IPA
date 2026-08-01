@@ -67,6 +67,7 @@ General American.
 index.html              App shell / markup
 js/phoneme-info.js      Static IPA symbol metadata (chart + inspector)
 js/g2p.js               The G2P engine (dictionary + rules + dialects)
+js/quiz-data.js         Practice quiz content: 10 batches x 10 questions (generated, see below)
 js/app.js               UI wiring (tabs, quiz, audio, settings)
 assets/dict.js          ~124k word pronunciation dictionary (generated)
 assets/tailwind.css     Compiled Tailwind build (generated, see below)
@@ -74,9 +75,23 @@ assets/fontawesome.min.css / webfonts/   Self-hosted icon font
 assets/fonts.css / fonts/                Self-hosted Noto Sans + Inter webfonts (generated)
 tailwind.config.js, src/input.css        Tailwind CLI build inputs
 scripts/build-fonts.py                   Generates assets/fonts.css + assets/fonts/ from @fontsource packages
+scripts/build-quiz.js                    Generates js/quiz-data.js from the real g2p.js engine
 vercel.json                              Tells Vercel this is a plain static site (no framework/build step)
 .github/workflows/deploy-pages.yml       GitHub Pages deploy workflow
 ```
+
+## Practice quiz content
+
+The Practice tab has 10 exercise batches of 10 questions each (IPA→word,
+word→IPA, phoneme identification, stress placement, syllable counting,
+narrow/GA transcription, British RP transcription, and vowel-matching
+games). Every question is generated and verified programmatically by
+`scripts/build-quiz.js` against the actual `js/g2p.js` engine - correct
+answers are the engine's real output rather than hand-typed IPA, and the
+script asserts every question has exactly one right answer among four
+distinct options before writing `js/quiz-data.js`. Regenerate with
+`npm run build:quiz` (it reshuffles which distractors/word groups are used,
+so output differs slightly between runs).
 
 ## Rebuilding the CSS/font bundles
 
