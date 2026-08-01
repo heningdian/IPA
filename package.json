@@ -1,7 +1,7 @@
 {
   "name": "ipa",
   "version": "1.0.0",
-  "description": "PhoneticCraft - offline English IPA transcriber and phonetics toolkit",
+  "description": "English IPA - offline English IPA transcriber and phonetics toolkit",
   "main": "index.html",
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./assets/tailwind.css --minify",

@@ -1,4 +1,4 @@
-// PhoneticCraft UI wiring. All phonetic transcription is done locally via js/g2p.js -
+// English IPA UI wiring. All phonetic transcription is done locally via js/g2p.js -
 // no network calls, no API keys, and it works fully offline once the page has loaded.
 
 let currentTab = 'transcriber';

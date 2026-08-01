@@ -1,4 +1,4 @@
-// PhoneticCraft English Grapheme-to-Phoneme (G2P) engine.
+// English IPA - Grapheme-to-Phoneme (G2P) engine.
 //
 // Three-tier pipeline, tried in order for every word:
 //   1. Exact dictionary lookup      (window.IPA_DICT, ~124k words derived from CMUdict)

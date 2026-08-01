@@ -1,4 +1,4 @@
-# PhoneticCraft
+# English IPA
 
 An offline, dependency-free English IPA (International Phonetic Alphabet)
 transcriber and phonetics learning toolkit.
