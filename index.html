@@ -454,8 +454,29 @@
     <script src="js/g2p.js"></script>
     <script src="js/app.js"></script>
 
-    <!-- Tally feedback popup (opened by the header "Send Feedback" button) -->
-    <script async src="https://tally.so/widget/embed.js"></script>
+    <!-- Tally feedback popup (opened by the header "Send Feedback" button).
+         Uses Tally's own bootstrap pattern (load once, then explicitly call
+         Tally.loadEmbeds()) rather than a bare <script async> tag, so the
+         data-tally-open button reliably gets its click handler bound even
+         if the script finishes loading after this point in the page. -->
+    <script>
+        (function (d, w) {
+            function bind() {
+                if (typeof Tally !== 'undefined') {
+                    Tally.loadEmbeds();
+                }
+            }
+            if (typeof Tally !== 'undefined') {
+                bind();
+            } else if (!d.querySelector('script[src="' + w + '"]')) {
+                var s = d.createElement('script');
+                s.src = w;
+                s.onload = bind;
+                s.onerror = bind;
+                d.body.appendChild(s);
+            }
+        })(document, 'https://tally.so/widget/embed.js');
+    </script>
 
     <!-- Ko-fi floating support widget -->
     <script src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"></script>
